@@ -1,0 +1,5 @@
+sketch/
+
+build/
+compile_commands.json
+.clangd/
