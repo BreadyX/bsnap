@@ -57,7 +57,12 @@ inline _Bool option_is_null(b_option option)
 
 b_cmd_context *new_context(char *name, _Bool print_errors);
 void set_name(b_cmd_context *context, char *name);
-void set_print_errors(b_cmd_context *context, _Bool print_errors);
+void set_usage(b_cmd_context *context, char *usage);
+void set_description(b_cmd_context *context, char *description);
+void set_epilog(b_cmd_context *context, char *epilog);
+inline void set_print_errors(b_cmd_context *context, _Bool print_errors) 
+{ if (!context) return;
+  context->print_errors = print_errors; }
 
 void push_commands(b_cmd_context *context, const b_command *commands);
 void clear_commands(b_cmd_context *context);
@@ -76,6 +81,9 @@ cmd_result extract_command(b_cmd_context *context, int *argc, char **argv,
 #ifdef __CMD_INTERNAL
 struct b_cmd_context_s {
 	char *name;
+	char *usage;
+	char *description;
+	char *epilog
 
 	b_option *options;
 	b_command *commands;

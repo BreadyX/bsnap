@@ -4,6 +4,9 @@
 #define __CMD_INTERNAL
 #include "cmd.h"
 
+static void set_str(char **to_set, char *new);
+extern void set_print_errors(b_cmd_context *context, _Bool print_errors);
+
 b_cmd_context *new_context(char *name, _Bool print_errors)
 {
 	b_cmd_context *to_return;
@@ -26,7 +29,11 @@ b_cmd_context *new_context(char *name, _Bool print_errors)
 	to_return->name = name ? strdup(name) : calloc(1, sizeof(char));
 	if (errno != 0)
 		goto err;
-
+	
+	to_return->usage = NULL;
+	to_return->description = NULL;
+	to_return->epilog = NULL;
+	
 	to_return->print_errors = print_errors;
 	return to_return;
 
@@ -93,25 +100,42 @@ void clear_options(b_cmd_context *context)
 
 void set_name(b_cmd_context *context, char *name)
 {
-	char *new_name = NULL;
-
 	if (!name || !context)
 		return;
-
-	new_name = strdup(name);
-	if (!new_name)
-		return;
-
-	free(context->name);
-	context->name = new_name;
+	set_str(&(context->name), name)
 }
 
-void set_print_errors(b_cmd_context *context, _Bool print_errors)
+void set_usage(b_cmd_context *context, char *usage)
 {
-	if (!context)
+	if (!usage || !context)
+		return;
+	set_str(&(context->usage), usage)
+}
+
+void set_description(b_cmd_context *context, char *description)
+{
+	if (!description || !context)
+		return;
+	set_str(&(context->description), description)
+}
+
+void set_epilog(b_cmd_context *context, char *epilog)
+{
+	if (!epilog || !context)
+		return;
+	set_str(&(context->epilog), epilog)
+}
+
+void set_str(char **str, char *new_str)
+{
+	char *new = NULL;
+
+	new = strdup(new_str);
+	if (!new)
 		return;
 
-	context->print_errors = print_errors;
+	free(*str);
+	*str = new_str;
 }
 
 void delete_context(b_cmd_context **context)
@@ -120,6 +144,9 @@ void delete_context(b_cmd_context **context)
 		return;
 
 	free((*context)->name);
+	free((*context)->usage);
+	free((*context)->description);
+	free((*context)->epilog);
 	free((*context)->options);
 	free((*context)->commands);
 	free(*context);
