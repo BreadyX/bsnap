@@ -36,6 +36,30 @@ void print_command_description(b_cmd_context *context)
 		print_entry(context->commands[i].name, context->commands[i].tip);
 }
 
+void print_help_epilog(b_cmd_context *context)
+{
+	if (context->epilog)
+		print_wrapped(context->epilog, WRAP_AT, NULL);
+}
+
+void print_help_complete(b_cmd_context *context)
+{
+	print_help_usage();
+	putchar('\n');
+
+	print_help_description();
+	putchar('\n');
+
+	print_command_description();
+	putchar('\n');
+
+	//TODO
+	// print_option_description();
+	// putchar('\n');
+
+	print_help_epilog();
+}
+
 void print_entry(char *first, char *second)
 {
 	int first_len = strlen(first);
