@@ -10,12 +10,14 @@ static int INDENT_SIZE = 2;
 static int FIRST_COLUMN_LEN = 20;
 static int WRAP_AT = 80;
 
+static void print_wrapped(char *text, int limit, void (indent)(void));
+
 static void print_entry(char *first, char *second);
 static void new_line_second_col(void);
 
 void print_help_usage(b_cmd_context *context)
 {
-	if (!(context->usage))
+	if (context->usage)
 		printf("%s\n", context->usage);
 	else
 		printf("%s: [OPTION...] {COMMAND}\n", context->name);
@@ -23,8 +25,8 @@ void print_help_usage(b_cmd_context *context)
 
 void print_help_description(b_cmd_context *context)
 {
-	if (!(context->usage))
-		printf("%s\n", context->usage);
+	if (context->description)
+		print_wrapped(context->description, WRAP_AT, NULL);
 }
 
 void print_command_description(b_cmd_context *context)
@@ -38,49 +40,54 @@ void print_entry(char *first, char *second)
 {
 	int first_len = strlen(first);
 	int second_len = strlen(second);
-	
-	int second_i, cur_word_i;
 	int second_size = WRAP_AT - (INDENT_SIZE + FIRST_COLUMN_LEN);
-	int remaining = second_size;
-	char word[STRLEN];
 	
-	// indent
 	for (int i = 0; i < INDENT_SIZE; i++)
 		putchar(' ');
 
-	// first
 	printf("%s", first);
 	if (first_len > FIRST_COLUMN_LEN) {
+		putchar('\n');
 		new_line_second_col();
 	} else
 		for (int i = 0; i < FIRST_COLUMN_LEN - first_len; i++)
 			putchar(' ');
 
-	// second
-	if (second_len > remaining) {
-		for(second_i = cur_word_i = 0; second_i <= second_len; second_i++) {
-			if (isblank(second[second_i]) || second[second_i] == '\0') {
-				word[cur_word_i] = '\0';
-				cur_word_i = 0;
-				if (second_i > remaining) {
-					remaining += second_size;
-					new_line_second_col();
-				}
-				printf("%s%c", word, second[second_i]);
-			} else {
-				if (cur_word_i < STRLEN)
-					word[cur_word_i] = second[second_i];
-				cur_word_i++;
-			}
-		}
-		putchar('\n');
-	} else
+	if (second_len > second_size)
+		print_wrapped(second, second_size, new_line_second_col);
+	else
 		printf("%s\n", second);
+}
+
+void print_wrapped(char *text, int limit, void (indent)(void))
+{
+	int text_len = strlen(text);
+	int text_i, cur_word_i;
+	int remaining = limit;
+	char word[STRLEN];
+
+	for(text_i = cur_word_i = 0; text_i <= text_len; text_i++) {
+		if (isblank(text[text_i]) || text[text_i] == '\0') {
+			word[cur_word_i] = '\0';
+			cur_word_i = 0;
+			if (text_i > remaining) {
+				remaining += limit;
+				putchar('\n');
+				if (indent)
+					(*indent)();
+			}
+			printf("%s%c", word, text[text_i]);
+		} else {
+			if (cur_word_i < STRLEN)
+				word[cur_word_i] = text[text_i];
+			cur_word_i++;
+		}
+	}
+	putchar('\n');
 }
 
 void new_line_second_col(void)
 {
-	putchar('\n');
 	for (int i = 0; i < FIRST_COLUMN_LEN + INDENT_SIZE; i++)
 		putchar(' ');
 }

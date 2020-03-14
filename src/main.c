@@ -15,8 +15,7 @@ static b_command commands[] = {
 	{ "restore", "restore", NULL },
 	{ "list", "list", NULL },
 	{ "show", "show", NULL },
-	{ "test", "this is a very long description that will span multiple lines,"
-	          " hopefully. My dick is big. My dick is very very big big", NULL},
+	{ "test", TEST_LONG_STR, NULL},
 	{ 0 }
 };
 
@@ -44,8 +43,6 @@ int main(int argc, char **argv)
 
 	push_commands(main_context, commands);
 	push_options(main_context, base_options);
-	
-	print_command_description(main_context);
 
 	status = extract_command(main_context, &argc, argv, &found_command);
 	switch (status) {
