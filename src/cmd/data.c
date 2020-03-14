@@ -1,6 +1,8 @@
 #include <stdlib.h>
 
+#define __CMD_INTERNAL
 #include "cmd.h"
+
 extern _Bool command_is_null(b_command command);
 extern _Bool option_is_null(b_option option);
 

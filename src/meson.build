@@ -1,23 +1,17 @@
-src = ['./main.c',
-	   './snap/snap-action.c', # debug
-	   # TODO
+base_dir = 'src'
+
+src += [base_dir / 'main.c',
+		base_dir / 'cmd' / 'context.c',
+		base_dir / 'cmd' / 'data.c',
+		base_dir / 'cmd' / 'parse_command.c',
+		base_dir / 'cmd' / 'parse_options.c',
+		base_dir / 'cmd' / 'util.c',
+		base_dir / 'cmd' / 'help.c',
+	    base_dir / 'snap' / 'snap-action.c', # debug
+	    # TODO
 	  ]
 
-subdir('./cmd')
+# // TODO: this is only for debug purposes. Has to be removed
+includes += include_directories('.')
 
-# Configure config.h
-config_h = configuration_data()
-config_h.set('name', meson.project_name())
-config_h.set('version', meson.project_version())
-configure_file(input: 'config.h.in',
-				output: 'config.h',
-				configuration: config_h)
 
-# Setup includes
-config_include = include_directories('.')
-includes = [config_include]
-
-#Compile
-bsnap = executable(meson.project_name(), sources: src, include_directories: includes)
-
-install_data(bsnap, install_dir: bin_dir, install_mode: 'rwxr-xr-x')

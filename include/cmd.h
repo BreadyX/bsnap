@@ -42,6 +42,20 @@ struct b_option_s {
 	char *arg_name;
 };
 
+#ifdef __CMD_INTERNAL
+struct b_cmd_context_s {
+	char *name;
+	char *usage;
+	char *description;
+	char *epilog;
+
+	b_option *options;
+	b_command *commands;
+
+	_Bool print_errors;
+};
+#endif
+
 #include <string.h>
 int command_len(const b_command *commands);
 b_command *cat_commands(const b_command *first, const b_command *second);
@@ -60,9 +74,7 @@ void set_name(b_cmd_context *context, char *name);
 void set_usage(b_cmd_context *context, char *usage);
 void set_description(b_cmd_context *context, char *description);
 void set_epilog(b_cmd_context *context, char *epilog);
-inline void set_print_errors(b_cmd_context *context, _Bool print_errors) 
-{ if (!context) return;
-  context->print_errors = print_errors; }
+void set_print_errors(b_cmd_context *context, _Bool print_errors);
 
 void push_commands(b_cmd_context *context, const b_command *commands);
 void clear_commands(b_cmd_context *context);
@@ -76,21 +88,14 @@ opt_result parse_options(b_cmd_context *context, int *argc, char **argv);
 cmd_result extract_command(b_cmd_context *context, int *argc, char **argv,
 						   b_command *found_command);
 
-/* TODO: Help and other dialogs */
+void print_help_usage(b_cmd_context *context);
+void print_help_description(b_cmd_context *context);
+void print_command_description(b_cmd_context *context);
+void print_option_description(b_cmd_context *context);
+void print_help_epilog(b_cmd_context *context);
+void print_help_complete(b_cmd_context *context);
 
 #ifdef __CMD_INTERNAL
-struct b_cmd_context_s {
-	char *name;
-	char *usage;
-	char *description;
-	char *epilog
-
-	b_option *options;
-	b_command *commands;
-
-	_Bool print_errors;
-};
-
 void move_to_last(int i, int argc, char **argv);
 #endif
 

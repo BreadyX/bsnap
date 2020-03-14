@@ -5,7 +5,6 @@
 #include "cmd.h"
 
 static void set_str(char **to_set, char *new);
-extern void set_print_errors(b_cmd_context *context, _Bool print_errors);
 
 b_cmd_context *new_context(char *name, _Bool print_errors)
 {
@@ -102,28 +101,28 @@ void set_name(b_cmd_context *context, char *name)
 {
 	if (!name || !context)
 		return;
-	set_str(&(context->name), name)
+	set_str(&(context->name), name);
 }
 
 void set_usage(b_cmd_context *context, char *usage)
 {
 	if (!usage || !context)
 		return;
-	set_str(&(context->usage), usage)
+	set_str(&(context->usage), usage);
 }
 
 void set_description(b_cmd_context *context, char *description)
 {
 	if (!description || !context)
 		return;
-	set_str(&(context->description), description)
+	set_str(&(context->description), description);
 }
 
 void set_epilog(b_cmd_context *context, char *epilog)
 {
 	if (!epilog || !context)
 		return;
-	set_str(&(context->epilog), epilog)
+	set_str(&(context->epilog), epilog);
 }
 
 void set_str(char **str, char *new_str)
@@ -136,6 +135,13 @@ void set_str(char **str, char *new_str)
 
 	free(*str);
 	*str = new_str;
+}
+
+void set_print_errors(b_cmd_context *context, _Bool print_errors)
+{
+	if (!context) 
+		return;
+	context->print_errors = print_errors;
 }
 
 void delete_context(b_cmd_context **context)
