@@ -15,7 +15,6 @@ static b_command commands[] = {
 	{ "restore", "restore", NULL },
 	{ "list", "list", NULL },
 	{ "show", "show", NULL },
-	{ "test", TEST_LONG_STR, NULL},
 	{ 0 }
 };
 
@@ -27,7 +26,7 @@ static b_option base_options[] = {
 	{ 0 }
 };
 
-void do_base(void);
+void do_base(b_cmd_context *context);
 
 int main(int argc, char **argv)
 {
@@ -53,21 +52,21 @@ int main(int argc, char **argv)
 		case COMMAND_MISSING:
 			status = parse_options(main_context, &argc, argv);
 			if (status != OPT_SUCCESS) {
-				printf("Print help\n");
+				print_help_complete(main_context);
 				return EXIT_FAILURE;
 			}
-			do_base();
+			do_base(main_context);
 			return EXIT_SUCCESS;
 		case COMMAND_INVALID:
-			printf("Print help\n");
+			print_help_complete(main_context);
 			return EXIT_FAILURE;
 	}
 }
 
-void do_base(void)
+void do_base(b_cmd_context *context)
 {
 	if (opt_help)
-		printf("Print help\n");
+		print_help_complete(context);
 	else if (opt_version)
 		printf("Print version\n");
 }
