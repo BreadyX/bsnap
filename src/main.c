@@ -7,7 +7,7 @@
 #include "config.h"
 #include "cmd.h"
 
-#include "snap/snap-action.h"
+#include "snap.h"
 // TODO: other actions
 
 #define PRG_DESCRIPTION "bsnap.\n"\
@@ -15,7 +15,7 @@
 #define PRG_EPILOG      "bsnap epilog."
 
 static b_command commands[] = {
-	{ "snap", "Create a new snapshot", snap_eval },
+	{ "snap", "Create a new snapshot", snap_callback },
 	/* { "restore", "restore", NULL }, */
 	/* { "list", "list", NULL }, */
 	/* { "show", "show", NULL }, */
@@ -30,7 +30,7 @@ static b_option base_options[] = {
 	{ 0 }
 };
 
-void do_base(b_cmd_context *context);
+static void do_base(b_cmd_context *context);
 
 int main(int argc, char **argv)
 {
