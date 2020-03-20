@@ -10,19 +10,23 @@
 #include "snap/snap-action.h"
 // TODO: other actions
 
+#define PRG_DESCRIPTION "bsnap.\n"\
+						"To print info about a specific command run bsnap command --help"
+#define PRG_EPILOG      "bsnap epilog."
+
 static b_command commands[] = {
-	{ "snap", "snap", snap_eval },
-	{ "restore", "restore", NULL },
-	{ "list", "list", NULL },
-	{ "show", "show", NULL },
+	{ "snap", "Create a new snapshot", snap_eval },
+	/* { "restore", "restore", NULL }, */
+	/* { "list", "list", NULL }, */
+	/* { "show", "show", NULL }, */
 	{ 0 }
 };
 
 bool opt_help;
 bool opt_version;
 static b_option base_options[] = {
-	{ "help", 'h', "Show help", ARG_NONE, &opt_help, NULL },
-	{ "version", 'V', "Show version", ARG_NONE, &opt_version, NULL },
+	{ "help", 'h', "Print this dialog", ARG_NONE, &opt_help, NULL },
+	{ "version", 'V', "Print info about version", ARG_NONE, &opt_version, NULL },
 	{ 0 }
 };
 
@@ -42,6 +46,9 @@ int main(int argc, char **argv)
 
 	push_commands(main_context, commands);
 	push_options(main_context, base_options);
+
+	set_description(main_context, PRG_DESCRIPTION);
+	set_epilog(main_context, PRG_EPILOG);
 
 	status = extract_command(main_context, &argc, argv, &found_command);
 	switch (status) {
@@ -68,5 +75,5 @@ void do_base(b_cmd_context *context)
 	if (opt_help)
 		print_help_complete(context);
 	else if (opt_version)
-		printf("Print version\n");
+		printf("%s - version %s", NAME, VERSION);
 }
