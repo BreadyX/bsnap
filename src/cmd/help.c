@@ -5,12 +5,11 @@
 #define __CMD_INTERNAL
 #include "cmd.h"
 #include "config.h"
+#include "print_utils.h"
 
 static int INDENT_SIZE = 2;
 static int FIRST_COLUMN_LEN = 20;
 static int WRAP_AT = 80;
-
-static void print_wrapped(char *text, int limit, void (indent)(void));
 
 static void print_entry(char *first, char *second);
 static void new_line_second_col(void);
@@ -113,32 +112,6 @@ void print_entry(char *first, char *second)
 		putchar('\n');
 	} else
 		printf("%s\n", second);
-}
-
-void print_wrapped(char *text, int limit, void (indent)(void))
-{
-	int text_len = strlen(text);
-	int text_i, cur_word_i;
-	int remaining = limit;
-	char word[STRLEN];
-
-	for(text_i = cur_word_i = 0; text_i <= text_len; text_i++) {
-		if (isblank(text[text_i]) || text[text_i] == '\0') {
-			word[cur_word_i] = '\0';
-			cur_word_i = 0;
-			if (text_i > remaining) {
-				remaining += limit;
-				putchar('\n');
-				if (indent)
-					(*indent)();
-			}
-			printf("%s%c", word, text[text_i]);
-		} else {
-			if (cur_word_i < STRLEN)
-				word[cur_word_i] = text[text_i];
-			cur_word_i++;
-		}
-	}
 }
 
 void new_line_second_col(void)
