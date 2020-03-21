@@ -146,6 +146,13 @@ void set_print_errors(b_cmd_context *context, _Bool print_errors)
 	context->print_errors = print_errors;
 }
 
+void set_handle_help(b_cmd_context *context, _Bool handle_help)
+{
+	if (!context) 
+		return;
+	context->handle_help = handle_help;
+}
+
 void delete_context(b_cmd_context **context)
 {
 	if (!context || !(*context))

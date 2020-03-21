@@ -23,16 +23,17 @@ typedef struct {
 static opt_result set_bools(b_option *options);
 static opt_result set_to(b_option *opt, void *val);
 
-static opt_result handle_opt(opt_arg *to_eval, b_option *options);
+static opt_result handle_opt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help);
 
-static opt_result handle_longopt(opt_arg *to_eval, b_option *options);
+static opt_result handle_longopt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help);
 static char *separate_optarg_with_equal(char *opt_full, char **opt, char **arg);
 static b_option *find_longopt(char *to_find, b_option *where);
 
-static opt_result handle_shortopt(opt_arg *to_eval, b_option *options);
+static opt_result handle_shortopt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help);
 static b_option *find_shortopt(char to_find, b_option *where);
 static opt_result handle_shortopt_with_arg(opt_arg *to_eval, b_option *found);
 
+static void handle_help(b_cmd_context *context);
 static void clean_argv(int *argc, char **argv, int n_args);
 
 static void print_error(char *name, opt_arg *argv, opt_result status);
@@ -47,6 +48,8 @@ opt_result parse_options(b_cmd_context *context, int *argc, char **argv)
 	int index = 0, n_args = *argc;
 	opt_result status = OPT_SUCCESS;
 	opt_arg to_eval = {0};
+
+	_Bool help = false;
 
 	status = set_bools(options);
 	if (status != OPT_SUCCESS)
@@ -71,7 +74,7 @@ opt_result parse_options(b_cmd_context *context, int *argc, char **argv)
 			}
 			to_eval.skip = false;
 			to_eval.opt_next = (index == *argc - 1) ? NULL : argv[index + 1];
-			status = handle_opt(&to_eval, options);
+			status = handle_opt(context, &to_eval, &help);
 			if (status != OPT_SUCCESS)
 				goto error;
 			if (to_eval.skip)
@@ -83,6 +86,10 @@ opt_result parse_options(b_cmd_context *context, int *argc, char **argv)
 		}
 	}
 	clean_argv(argc, argv, n_args);
+
+	if (help)
+		handle_help(context);
+
 	return status;
 
 error:
@@ -147,14 +154,14 @@ opt_result set_to(b_option *opt, void *val)
 	}
 }
 
-opt_result handle_opt(opt_arg *to_eval, b_option *options)
+opt_result handle_opt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help)
 {
 	if (to_eval->type == LONG)
-		return handle_longopt(to_eval, options);
-	return handle_shortopt(to_eval, options);
+		return handle_longopt(context, to_eval, handle_help);
+	return handle_shortopt(context, to_eval, handle_help);
 }
 
-opt_result handle_longopt(opt_arg *to_eval, b_option *options)
+opt_result handle_longopt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help)
 {
 	opt_result out = OPT_SUCCESS;
 	char *opt, *arg, *sep, back;
@@ -164,10 +171,20 @@ opt_result handle_longopt(opt_arg *to_eval, b_option *options)
 	back = *sep;
 	*sep = '\0';
 
-	found = find_longopt(opt, options);
+	found = find_longopt(opt, context->options);
 	if (!found) {
-		out = OPT_INVALID;
-		goto exit;
+		if (strcmp(opt, HELP_LONG) == 0 && context->handle_help) {
+			if (arg) {
+				out = ARG_SHOULD_NOT_BE;
+				goto exit;
+			}
+			*handle_help = true;
+			out = OPT_SUCCESS;
+			goto exit;
+		} else {
+			out = OPT_INVALID;
+			goto exit;
+		}
 	}
 
 	if (found->type != ARG_NONE) {
@@ -212,26 +229,38 @@ char *separate_optarg_with_equal(char *opt_full, char **opt, char **arg)
 
 b_option *find_longopt(char *to_find, b_option *where)
 {
-	for (int i = 0; !option_is_null(where[i]); i++)
+	int len = option_len(where);
+	for (int i = 0; i < len; i++)
 		if (strcmp(to_find, where[i].long_name) == 0)
 			return &where[i];
 	return NULL;
 }
 
-opt_result handle_shortopt(opt_arg *to_eval, b_option *options)
+opt_result handle_shortopt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help)
 {
 	opt_result status = OPT_SUCCESS;
 	char opt;
 	b_option *found;
 
 	for (int i = 0; (opt = to_eval->opt[i]) != '\0'; i++) {
-		found = find_shortopt(opt, options);
+		found = find_shortopt(opt, context->options);
 		if (!found) {
-			to_eval->invalid_shortopt = opt;
-			return OPT_INVALID;
+			if (opt == HELP_SHORT && context->handle_help) {
+				*handle_help = true;
+				continue;
+			} else {
+				to_eval->invalid_shortopt = opt;
+				return OPT_INVALID;
+			}
 		}
-		if(found->type != ARG_NONE && i == 0)
-			return handle_shortopt_with_arg(to_eval, found);
+		if(found->type != ARG_NONE) {
+			if (i == 0) {
+				return handle_shortopt_with_arg(to_eval, found);
+			} else {
+				to_eval->invalid_shortopt = opt;
+				return OPT_MISPLACED;
+			}
+		}
 
 		status = set_to(found, &BOOL_TRUE);
 		if (status != OPT_SUCCESS)
@@ -253,13 +282,22 @@ opt_result handle_shortopt_with_arg(opt_arg *to_eval, b_option *found)
 {
 	char *arg;
 	if (to_eval->opt[1] == '\0') {
-		if (to_eval->opt_next == NULL)
+		if (to_eval->opt_next == NULL || to_eval->opt_next[0] == '-') {
+			to_eval->invalid_shortopt = to_eval->opt[0];
 			return ARG_MISSING;
+		}
 		to_eval->skip = true;
 		arg = to_eval->opt_next;
 	} else
 		arg = &to_eval->opt[1];
+	
 	return set_to(found, arg);
+}
+
+void handle_help(b_cmd_context *context)
+{
+	print_help(context);
+	exit(EXIT_SUCCESS);
 }
 
 void clean_argv(int *argc, char **argv, int n_args)
@@ -275,14 +313,17 @@ void clean_argv(int *argc, char **argv, int n_args)
 
 void print_error(char *name, opt_arg *argv, opt_result status)
 {
-	char shortopt;
 	switch (status) {
 		case OPT_INVALID:
 			if (argv->type == LONG)
-				perror_sep_optarg("%s: Invalid option %s\n", name, argv->opt);
+				perror_sep_optarg("%s: Invalid option --%s\n", name, argv->opt);
 			else
-				fprintf(stderr, "%s: Invalid option %c\n", name,
+				fprintf(stderr, "%s: Invalid option -%c\n", name,
 						argv->invalid_shortopt);
+			break;
+		case OPT_MISPLACED:
+			fprintf(stderr, "%s: Option -%c is misplaced\n", name,
+				    argv->invalid_shortopt);
 			break;
 		case OPT_OTHER_ERROR:
 			fprintf(stderr, "%s: An error occurred while parsing: ", name);
@@ -290,34 +331,27 @@ void print_error(char *name, opt_arg *argv, opt_result status)
 			break;
 		case ARG_BAD_VALUE:
 			if (argv->type == LONG)
-				perror_sep_optarg("%s: Argument to option %s is of invalid type\n",
+				perror_sep_optarg("%s: Argument to option --%s is of invalid type\n",
 								  name, argv->opt);
 			else {
-				shortopt = argv->opt[1];
-				fprintf(stderr, "%s: Argument to option %c is of invalid type\n",
-						name, shortopt);
+				fprintf(stderr, "%s: Argument to option -%c is of invalid type\n",
+						name, argv->opt[0]);
 			}
 			break;
 		case ARG_MISSING:
 			if (argv->type == LONG)
-				perror_sep_optarg("%s: Argument to option %s is missing\n",
+				perror_sep_optarg("%s: Argument to option --%s is missing\n",
 								  name, argv->opt);
 			else {
-				shortopt = argv->opt[1];
-				fprintf(stderr, "%s: Argument to option %c is missing\n",
-						name, shortopt);
+				fprintf(stderr, "%s: Argument to option -%c is missing\n",
+						name, argv->invalid_shortopt);
 			}
 			break;
 		case ARG_SHOULD_NOT_BE:
-			if (argv->type == LONG)
-				perror_sep_optarg("%s: Option %s doesn't allow for arguments\n",
-						          name, argv->opt);
-			else {
-				shortopt = argv->opt[1];
-				fprintf(stderr, "%s: Option %c doesn't allow for arguments\n",
-					    name, shortopt);
-			}
+			perror_sep_optarg("%s: Option --%s doesn't allow for arguments\n",
+					          name, argv->opt);
 			break;
+
 		case OPT_SUCCESS:
 			fprintf(stderr, "%s: Everything is ok but this is somehow an error, "
 				    "I am confused\n", name);

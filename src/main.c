@@ -4,15 +4,12 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "main.h"
 #include "config.h"
 #include "cmd.h"
 
 #include "commands/snap.h"
 // TODO: other actions
-
-#define PRG_DESCRIPTION "bsnap.\n"\
-						"To print info about a specific command run bsnap command --help"
-#define PRG_EPILOG      "bsnap epilog."
 
 static b_command commands[] = {
 	{ "snap", "Create a new snapshot", snap_callback },
@@ -22,11 +19,14 @@ static b_command commands[] = {
 	{ 0 }
 };
 
-bool opt_help;
 bool opt_version;
 static b_option base_options[] = {
-	{ "help", 'h', "Print this dialog", ARG_NONE, &opt_help, NULL },
 	{ "version", 'V', "Print info about version", ARG_NONE, &opt_version, NULL },
+	{ 0 }
+};
+
+b_option global_options[] = {
+	{ "verbose", 'v', "Be verbose", ARG_NONE, &BE_VERBOSE, NULL },
 	{ 0 }
 };
 
@@ -40,11 +40,14 @@ int main(int argc, char **argv)
 	int status;
 
 	errno = 0;
-	main_context = new_context(NAME, true);
+	main_context = new_context(NAME);
+
 	if (!main_context)
 		return errno;
 
 	push_commands(main_context, commands);
+
+	push_options(main_context, global_options);
 	push_options(main_context, base_options);
 
 	set_description(main_context, PRG_DESCRIPTION);
@@ -59,21 +62,21 @@ int main(int argc, char **argv)
 		case COMMAND_MISSING:
 			status = parse_options(main_context, &argc, argv);
 			if (status != OPT_SUCCESS) {
-				print_help_complete(main_context);
+				print_help(main_context);
 				return EXIT_FAILURE;
 			}
 			do_base(main_context);
 			return EXIT_SUCCESS;
 		case COMMAND_INVALID:
-			print_help_complete(main_context);
+			print_help(main_context);
 			return EXIT_FAILURE;
 	}
 }
 
 void do_base(b_cmd_context *context)
 {
-	if (opt_help)
-		print_help_complete(context);
-	else if (opt_version)
+	if (opt_version) {
 		printf("%s - version %s", NAME, VERSION);
+		exit(EXIT_SUCCESS);
+	}
 }

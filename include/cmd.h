@@ -1,6 +1,9 @@
 #ifndef __CMD_H__
 #define __CMD_H__
 
+#define HELP_LONG  "help"
+#define HELP_SHORT 'h'
+
 typedef enum {
 	ARG_NONE,
 	ARG_HANDLE,
@@ -12,6 +15,7 @@ typedef enum {
 typedef enum {
 	OPT_SUCCESS,
 	OPT_INVALID,
+	OPT_MISPLACED,
 	OPT_OTHER_ERROR,
 	ARG_BAD_VALUE,
 	ARG_MISSING,
@@ -53,6 +57,7 @@ struct b_cmd_context_s {
 	b_command *commands;
 
 	_Bool print_errors;
+	_Bool handle_help;
 };
 #endif
 
@@ -72,6 +77,7 @@ void set_usage(b_cmd_context *context, char *usage);
 void set_description(b_cmd_context *context, char *description);
 void set_epilog(b_cmd_context *context, char *epilog);
 void set_print_errors(b_cmd_context *context, _Bool print_errors);
+void set_handle_help(b_cmd_context *context, _Bool handle_help);
 
 void push_commands(b_cmd_context *context, const b_command *commands);
 void push_options(b_cmd_context *context, const b_option *options);
