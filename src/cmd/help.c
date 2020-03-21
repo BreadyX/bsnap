@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include <ctype.h>
 
 #define __CMD_INTERNAL
@@ -11,8 +12,37 @@ static int INDENT_SIZE = 2;
 static int FIRST_COLUMN_LEN = 20;
 static int WRAP_AT = 80;
 
+static void print_option(b_option *option);
 static void print_entry(char *first, char *second);
 static void new_line_second_col(void);
+
+static void print_help_usage(b_cmd_context *context);
+static _Bool print_help_description(b_cmd_context *context);
+static _Bool print_command_description(b_cmd_context *context);
+static _Bool print_option_description(b_cmd_context *context);
+static _Bool print_help_epilog(b_cmd_context *context);
+
+void print_help(b_cmd_context *context)
+{
+	if (!context)
+		return;
+
+	print_help_usage(context);
+	putchar('\n');
+
+	if (print_help_description(context)) 
+		putchar('\n');
+	putchar('\n');
+
+	if (print_command_description(context))
+		putchar('\n');
+
+	if (print_option_description(context))
+		putchar('\n');
+
+	if (print_help_epilog(context))
+		putchar('\n');
+}
 
 void print_help_usage(b_cmd_context *context)
 {
@@ -22,72 +52,68 @@ void print_help_usage(b_cmd_context *context)
 		printf("%s: [OPTION...] {COMMAND}", context->name);
 }
 
-void print_help_description(b_cmd_context *context)
+_Bool print_help_description(b_cmd_context *context)
 {
-	if (context->description)
+	if (context->description) {
 		print_wrapped(context->description, WRAP_AT, NULL);
+		return true;
+	}
+	return false;
 }
 
-void print_command_description(b_cmd_context *context)
+_Bool print_command_description(b_cmd_context *context)
 {
+	int len = command_len(context->commands);
+	
+	if (len == 0)
+		return false;
+	
 	printf("Commands:\n");
-	for (int i = 0; !command_is_null(context->commands[i]); i++)
+	for (int i = 0; i < len; i++)
 		print_entry(context->commands[i].name, context->commands[i].tip);
+	return true;
+
 }
 
-void print_option_description(b_cmd_context *context)
+_Bool print_option_description(b_cmd_context *context)
 {
-	char opt[STRLEN];
-	b_option *cur_opt;
+	int len = option_len(context->options);
+	b_option stock_help = { HELP_LONG, HELP_SHORT, "Show this help message",
+		ARG_NONE, NULL, NULL };
+
+	if (len == 0 && !context->handle_help)
+		return false;
 
 	printf("Options:\n");
-	for (int i = 0; i < option_len(context->options); i++) {
-		cur_opt = &(context->options[i]);
+	for (int i = 0; i < len; i++)
+		print_option(&(context->options[i]));
+	
+	if (context->handle_help)
+		print_option(&stock_help);
+	
+	return true;
+}
 
-		memset(opt, '\0', sizeof(opt));
-		if (cur_opt->short_name != '\0')
-			snprintf(opt, STRLEN, "-%c, --", cur_opt->short_name);
+void print_option(b_option *option) {
+	char opt[STRLEN];
+	
+	memset(opt, '\0', sizeof(opt));
+	if (option->short_name != '\0')
+		snprintf(opt, STRLEN, "-%c, --", option->short_name);
+	else
+		strcat(opt, "     --");
+
+	if (option->long_name != NULL)
+		strcat(opt, option->long_name);
+	if (option->type != ARG_NONE) {
+		strcat(opt, "=");
+		if (option->arg_name != NULL)
+			strcat(opt, option->arg_name);
 		else
-			strcat(opt, "     --");
-
-		if (cur_opt->long_name != NULL)
-			strcat(opt, cur_opt->long_name);
-		if (cur_opt->type != ARG_NONE) {
-			strcat(opt, "=");
-			if (cur_opt->arg_name != NULL)
-				strcat(opt, cur_opt->arg_name);
-			else
-				strcat(opt, "ARG");
-		}
-
-		print_entry(opt, context->options[i].tip);
+			strcat(opt, "ARG");
 	}
-}
 
-void print_help_epilog(b_cmd_context *context)
-{
-	if (context->epilog)
-		print_wrapped(context->epilog, WRAP_AT, NULL);
-}
-
-
-void print_help_complete(b_cmd_context *context)
-{
-	print_help_usage(context);
-	putchar('\n');
-
-	print_help_description(context);
-	putchar('\n');
-	putchar('\n');
-
-	print_command_description(context);
-	putchar('\n');
-
-	print_option_description(context);
-	putchar('\n');
-
-	print_help_epilog(context);
-	putchar('\n');
+	print_entry(opt, option->tip);
 }
 
 void print_entry(char *first, char *second)
@@ -118,4 +144,13 @@ void new_line_second_col(void)
 {
 	for (int i = 0; i < FIRST_COLUMN_LEN + INDENT_SIZE; i++)
 		putchar(' ');
+}
+
+_Bool print_help_epilog(b_cmd_context *context)
+{
+	if (context->epilog) {
+		print_wrapped(context->epilog, WRAP_AT, NULL);
+		return true;
+	}
+	return false;
 }

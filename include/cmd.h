@@ -56,20 +56,17 @@ struct b_cmd_context_s {
 };
 #endif
 
-#include <string.h>
 int command_len(const b_command *commands);
-b_command *cat_commands(const b_command *first, const b_command *second);
-inline _Bool command_is_null(b_command command)
-{ b_command command_empty = {0};
-  return memcmp(&command, &command_empty, sizeof(b_command)) == 0; }
-
 int option_len(const b_option *options);
-b_option *cat_options(const b_option *first, const b_option *second);
-inline _Bool option_is_null(b_option option)
-{ b_option option_empty = {0};
-  return memcmp(&option, &option_empty, sizeof(b_option)) == 0; }
 
-b_cmd_context *new_context(char *name, _Bool print_errors);
+b_command *cat_commands(const b_command *first, const b_command *second);
+b_option *cat_options(const b_option *first, const b_option *second);
+
+_Bool command_is_null(b_command command);
+_Bool option_is_null(b_option option);
+
+b_cmd_context *new_context(char *name);
+
 void set_name(b_cmd_context *context, char *name);
 void set_usage(b_cmd_context *context, char *usage);
 void set_description(b_cmd_context *context, char *description);
@@ -77,9 +74,9 @@ void set_epilog(b_cmd_context *context, char *epilog);
 void set_print_errors(b_cmd_context *context, _Bool print_errors);
 
 void push_commands(b_cmd_context *context, const b_command *commands);
-void clear_commands(b_cmd_context *context);
-
 void push_options(b_cmd_context *context, const b_option *options);
+
+void clear_commands(b_cmd_context *context);
 void clean_options(b_cmd_context *options);
 
 void delete_context(b_cmd_context **context);
@@ -88,12 +85,7 @@ opt_result parse_options(b_cmd_context *context, int *argc, char **argv);
 cmd_result extract_command(b_cmd_context *context, int *argc, char **argv,
 						   b_command *found_command);
 
-void print_help_usage(b_cmd_context *context);
-void print_help_description(b_cmd_context *context);
-void print_command_description(b_cmd_context *context);
-void print_option_description(b_cmd_context *context);
-void print_help_epilog(b_cmd_context *context);
-void print_help_complete(b_cmd_context *context);
+void print_help(b_cmd_context *context);
 
 #ifdef __CMD_INTERNAL
 void move_to_last(int i, int argc, char **argv);

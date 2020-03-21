@@ -1,10 +1,20 @@
 #include <stdlib.h>
+#include <string.h>
 
 #define __CMD_INTERNAL
 #include "cmd.h"
 
-extern _Bool command_is_null(b_command command);
-extern _Bool option_is_null(b_option option);
+_Bool command_is_null(b_command command)
+{
+	b_command command_empty = {0};
+	return memcmp(&command, &command_empty, sizeof(b_command)) == 0;
+}
+
+_Bool option_is_null(b_option option)
+{
+	b_option option_empty = {0};
+	return memcmp(&option, &option_empty, sizeof(b_option)) == 0;
+}
 
 int command_len(const b_command *commands)
 {

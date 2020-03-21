@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include <errno.h>
 
 #define __CMD_INTERNAL
@@ -6,7 +7,7 @@
 
 static void set_str(char **to_set, char *new);
 
-b_cmd_context *new_context(char *name, _Bool print_errors)
+b_cmd_context *new_context(char *name)
 {
 	b_cmd_context *to_return;
 
@@ -33,7 +34,8 @@ b_cmd_context *new_context(char *name, _Bool print_errors)
 	to_return->description = NULL;
 	to_return->epilog = NULL;
 	
-	to_return->print_errors = print_errors;
+	to_return->print_errors = true;
+	to_return->handle_help = true;
 	return to_return;
 
 err:
