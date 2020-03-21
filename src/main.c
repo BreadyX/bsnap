@@ -7,7 +7,7 @@
 #include "config.h"
 #include "cmd.h"
 
-#include "snap.h"
+#include "commands/snap.h"
 // TODO: other actions
 
 #define PRG_DESCRIPTION "bsnap.\n"\
