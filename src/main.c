@@ -26,6 +26,8 @@ static boption base_options[] = {
 };
 
 boption global_options[] = {
+	{ "db", 'd', "Use this database", ARG_STR, &OVERRIDE_DB, "PATH" },
+	{ "config", 'c', "Use this config file", ARG_STR, &OVERRIDE_CONFIG, "PATH" },
 	{ "verbose", 'v', "Be verbose", ARG_NONE, &BE_VERBOSE, NULL },
 	{ 0 }
 };
@@ -57,20 +59,27 @@ int main(int argc, char **argv)
 	switch (status) {
 		case COMMAND_SUCCESS:
 			status = (found_command.handler)(argc, argv);
-			// check for status
-			return EXIT_SUCCESS;
+			if (status != 0)
+				goto error;
+			else
+				goto success;
 		case COMMAND_MISSING:
 			status = bcmd_context_parseo(main_context, &argc, argv);
-			if (status != OPT_SUCCESS) {
-				bcmd_context_print_help(main_context);
-				return EXIT_FAILURE;
-			}
+			if (status != OPT_SUCCESS)
+				goto error;
 			do_base(main_context);
-			return EXIT_SUCCESS;
+			goto success;
 		case COMMAND_INVALID:
-			bcmd_context_print_help(main_context);
-			return EXIT_FAILURE;
+			goto error;
 	}
+
+error:
+	fprintf(stderr, "See %s --help for help\n", bcmd_context_get_name(main_context));
+	status = EXIT_FAILURE;
+	// fall through
+success:
+	bcmd_context_delete(&main_context);
+	return status;
 }
 
 void do_base(bcmd_context *context)

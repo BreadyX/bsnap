@@ -73,11 +73,22 @@ _Bool boption_null(boption option);
 bcmd_context *bcmd_context_new(char *name);
 
 void bcmd_context_set_name(bcmd_context *context, char *name);
+char *bcmd_context_get_name(bcmd_context *context);
+
 void bcmd_context_set_usage(bcmd_context *context, char *usage);
+char *bcmd_context_get_usage(bcmd_context *context);
+
 void bcmd_context_set_description(bcmd_context *context, char *description);
+char *bcmd_context_get_description(bcmd_context *context);
+
 void bcmd_context_set_epilog(bcmd_context *context, char *epilog);
+char *bcmd_context_get_epilog(bcmd_context *context);
+
 void bcmd_context_set_print_errors(bcmd_context *context, _Bool print_errors);
+_Bool bcmd_context_get_print_errors(bcmd_context *context);
+
 void bcmd_context_set_handle_help(bcmd_context *context, _Bool handle_help);
+_Bool bcmd_context_get_handle_help(bcmd_context *context);
 
 void bcmd_context_pushc(bcmd_context *context, const bcommand *commands);
 void bcmd_context_pusho(bcmd_context *context, const boption *options);

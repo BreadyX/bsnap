@@ -10,6 +10,8 @@
 #define CONFIG_SEARCH  "/etc/@name@/@name@.conf:~/.config/@name@/@name@.conf"
 #define DAFAULT_DB_DIR "~/.local/share/@name@/db"
 
+extern char *OVERRIDE_DB;
+extern char *OVERRIDE_CONFIG;
 extern _Bool BE_VERBOSE;
 
 #endif

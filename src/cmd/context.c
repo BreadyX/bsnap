@@ -30,11 +30,11 @@ bcmd_context *bcmd_context_new(char *name)
 	to_return->name = name ? strdup(name) : calloc(1, sizeof(char));
 	if (errno != 0)
 		goto err;
-	
+
 	to_return->usage = NULL;
 	to_return->description = NULL;
 	to_return->epilog = NULL;
-	
+
 	to_return->print_errors = true;
 	to_return->handle_help = true;
 	return to_return;
@@ -107,11 +107,21 @@ void bcmd_context_set_name(bcmd_context *context, char *name)
 	set_str(&(context->name), name);
 }
 
+char *bcmd_context_get_name(bcmd_context *context)
+{
+	return context ? strdup(context->name) : NULL;
+}
+
 void bcmd_context_set_usage(bcmd_context *context, char *usage)
 {
 	if (!usage || !context)
 		return;
 	set_str(&(context->usage), usage);
+}
+
+char *bcmd_context_get_usage(bcmd_context *context)
+{
+	return context && context->usage ? strdup(context->usage) : NULL;
 }
 
 void bcmd_context_set_description(bcmd_context *context, char *description)
@@ -121,11 +131,21 @@ void bcmd_context_set_description(bcmd_context *context, char *description)
 	set_str(&(context->description), description);
 }
 
+char *bcmd_context_get_description(bcmd_context *context)
+{
+	return context && context->description ? strdup(context->description) : NULL;
+}
+
 void bcmd_context_set_epilog(bcmd_context *context, char *epilog)
 {
 	if (!epilog || !context)
 		return;
 	set_str(&(context->epilog), epilog);
+}
+
+char *bcmd_context_get_epilog(bcmd_context *context)
+{
+	return context && context->epilog ? strdup(context->epilog) : NULL;
 }
 
 void set_str(char **str, char *new_str)
@@ -137,21 +157,31 @@ void set_str(char **str, char *new_str)
 		return;
 
 	free(*str);
-	*str = new_str;
+	*str = new;
 }
 
 void bcmd_context_set_print_errors(bcmd_context *context, _Bool print_errors)
 {
-	if (!context) 
+	if (!context)
 		return;
 	context->print_errors = print_errors;
 }
 
+_Bool bcmd_context_get_print_errors(bcmd_context *context)
+{
+	return context ? context->print_errors : false;
+}
+
 void bcmd_context_set_handle_help(bcmd_context *context, _Bool handle_help)
 {
-	if (!context) 
+	if (!context)
 		return;
 	context->handle_help = handle_help;
+}
+
+_Bool bcmd_context_get_handle_help(bcmd_context *context)
+{
+	return context ? context->handle_help : false;
 }
 
 void bcmd_context_delete(bcmd_context **context)
