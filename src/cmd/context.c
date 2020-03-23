@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <errno.h>
+#include <string.h>
 
 #define __CMD_INTERNAL
 #include "cmd.h"
