@@ -4,82 +4,82 @@
 #define __CMD_INTERNAL
 #include "cmd.h"
 
-_Bool command_is_null(b_command command)
+_Bool bcommand_null(bcommand command)
 {
-	b_command command_empty = {0};
-	return memcmp(&command, &command_empty, sizeof(b_command)) == 0;
+	bcommand command_empty = {0};
+	return memcmp(&command, &command_empty, sizeof(bcommand)) == 0;
 }
 
-_Bool option_is_null(b_option option)
+_Bool boption_null(boption option)
 {
-	b_option option_empty = {0};
-	return memcmp(&option, &option_empty, sizeof(b_option)) == 0;
+	boption option_empty = {0};
+	return memcmp(&option, &option_empty, sizeof(boption)) == 0;
 }
 
-int command_len(const b_command *commands)
+int bcommand_len(const bcommand *commands)
 {
 	int i;
 	
 	if (!commands)
 		return 0;
 	
-	for (i = 0; !command_is_null(commands[i]); i++)
+	for (i = 0; !bcommand_null(commands[i]); i++)
 		;
 	return i;
 }
 
-b_command *cat_commands(const b_command *first, const b_command *second)
+bcommand *bcommand_cat(const bcommand *first, const bcommand *second)
 {
 	int old_len, new_len, total_len;
-	b_command *new_commands = NULL;
+	bcommand *new_commands = NULL;
 	
 	if (!first || !second)
 		return NULL;
 	
-	old_len = command_len(first);
-	new_len = command_len(second);
+	old_len = bcommand_len(first);
+	new_len = bcommand_len(second);
 	total_len = old_len + new_len + 1;
 	
-	new_commands = calloc(total_len, sizeof(b_command));
+	new_commands = calloc(total_len, sizeof(bcommand));
 	if (!new_commands)
 		return NULL;
 
-	memmove(new_commands, first, old_len * sizeof(b_command));
-	memmove(&new_commands[old_len], second, new_len * sizeof(b_command));
+	memmove(new_commands, first, old_len * sizeof(bcommand));
+	memmove(&new_commands[old_len], second, new_len * sizeof(bcommand));
 
 	return new_commands;
 }
 
-int option_len(const b_option *options)
+int boption_len(const boption *options)
 {
 	int i;
 	
 	if (!options)
 		return 0;
 	
-	for (i = 0; !option_is_null(options[i]); i++)
+	for (i = 0; !boption_null(options[i]); i++)
 		;
 	return i;
 }
 
-b_option *cat_options(const b_option *first, const b_option *second)
+boption *boption_cat(const boption *first, const boption *second)
 {
 	int old_len, new_len, total_len;
-	b_option *new_options = NULL;
+	boption *new_options = NULL;
 	
 	if (!first || !second)
 		return NULL;
 	
-	old_len = option_len(first);
-	new_len = option_len(second);
+	old_len = boption_len(first);
+	new_len = boption_len(second);
 	total_len = old_len + new_len + 1;
 	
-	new_options = calloc(total_len, sizeof(b_option));
+	new_options = calloc(total_len, sizeof(boption));
 	if (!new_options)
 		return NULL;
 
-	memmove(new_options, first, old_len * sizeof(b_option));
-	memmove(&new_options[old_len], second, new_len * sizeof(b_option));
+	memmove(new_options, first, old_len * sizeof(boption));
+	memmove(&new_options[old_len], second, new_len * sizeof(boption));
 
 	return new_options;
 }

@@ -8,21 +8,21 @@
 
 static void set_str(char **to_set, char *new);
 
-b_cmd_context *new_context(char *name)
+bcmd_context *bcmd_context_new(char *name)
 {
-	b_cmd_context *to_return;
+	bcmd_context *to_return;
 
-	to_return = malloc(sizeof(b_cmd_context));
+	to_return = malloc(sizeof(bcmd_context));
 	if (!to_return)
 		return to_return;
 
 	errno = 0;
-	to_return->commands = calloc(1, sizeof(b_command));
+	to_return->commands = calloc(1, sizeof(bcommand));
 	if (errno != 0)
 		goto err;
 
 	errno = 0;
-	to_return->options = calloc(1, sizeof(b_option));
+	to_return->options = calloc(1, sizeof(boption));
 	if (errno != 0)
 		goto err;
 
@@ -44,27 +44,27 @@ err:
 	return NULL;
 }
 
-void push_commands(b_cmd_context *context, const b_command *commands)
+void bcmd_context_pushc(bcmd_context *context, const bcommand *commands)
 {
-	b_command *new_commands;
+	bcommand *new_commands;
 
 	if (!context)
 		return;
 
-	new_commands = cat_commands(context->commands, commands);
+	new_commands = bcommand_cat(context->commands, commands);
 	if (!new_commands)
 		return;
 	free(context->commands);
 	context->commands = new_commands;
 }
 
-void clear_commands(b_cmd_context *context)
+void bcmd_context_clearc(bcmd_context *context)
 {
-	b_command *new_commands;
+	bcommand *new_commands;
 	if (!context)
 		return;
 
-	new_commands = calloc(1, sizeof(b_command));
+	new_commands = calloc(1, sizeof(bcommand));
 	if (!new_commands)
 		return;
 
@@ -72,27 +72,27 @@ void clear_commands(b_cmd_context *context)
 	context->commands = new_commands;
 }
 
-void push_options(b_cmd_context *context, const b_option *options)
+void bcmd_context_pusho(bcmd_context *context, const boption *options)
 {
-	b_option *new_options;
+	boption *new_options;
 
 	if (!context)
 		return;
 
-	new_options = cat_options(context->options, options);
+	new_options = boption_cat(context->options, options);
 	if (!new_options)
 		return;
 	free(context->options);
 	context->options = new_options;
 }
 
-void clear_options(b_cmd_context *context)
+void bcmd_context_clearo(bcmd_context *context)
 {
-	b_option *new_options;
+	boption *new_options;
 	if (!context)
 		return;
 
-	new_options = calloc(1, sizeof(b_command));
+	new_options = calloc(1, sizeof(bcommand));
 	if (!new_options)
 		return;
 
@@ -100,28 +100,28 @@ void clear_options(b_cmd_context *context)
 	context->options = new_options;
 }
 
-void set_name(b_cmd_context *context, char *name)
+void bcmd_context_set_name(bcmd_context *context, char *name)
 {
 	if (!name || !context)
 		return;
 	set_str(&(context->name), name);
 }
 
-void set_usage(b_cmd_context *context, char *usage)
+void bcmd_context_set_usage(bcmd_context *context, char *usage)
 {
 	if (!usage || !context)
 		return;
 	set_str(&(context->usage), usage);
 }
 
-void set_description(b_cmd_context *context, char *description)
+void bcmd_context_set_description(bcmd_context *context, char *description)
 {
 	if (!description || !context)
 		return;
 	set_str(&(context->description), description);
 }
 
-void set_epilog(b_cmd_context *context, char *epilog)
+void bcmd_context_set_epilog(bcmd_context *context, char *epilog)
 {
 	if (!epilog || !context)
 		return;
@@ -140,21 +140,21 @@ void set_str(char **str, char *new_str)
 	*str = new_str;
 }
 
-void set_print_errors(b_cmd_context *context, _Bool print_errors)
+void bcmd_context_set_print_errors(bcmd_context *context, _Bool print_errors)
 {
 	if (!context) 
 		return;
 	context->print_errors = print_errors;
 }
 
-void set_handle_help(b_cmd_context *context, _Bool handle_help)
+void bcmd_context_set_handle_help(bcmd_context *context, _Bool handle_help)
 {
 	if (!context) 
 		return;
 	context->handle_help = handle_help;
 }
 
-void delete_context(b_cmd_context **context)
+void bcmd_context_delete(bcmd_context **context)
 {
 	if (!context || !(*context))
 		return;

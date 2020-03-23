@@ -7,6 +7,6 @@
 						"To print info about a specific command run bsnap command --help"
 #define PRG_EPILOG      "bsnap epilog."
 
-extern b_option global_options[];
+extern boption global_options[];
 
 #endif

@@ -9,24 +9,24 @@
 
 bool opt_help;
 
-static b_option snap_option[] = {
+static boption snap_option[] = {
 	{ 0 }
 };
 
 int snap_callback(int argc, char **argv)
 {
-	b_cmd_context *snap_context;
+	bcmd_context *snap_context;
 	int status;
 
-	snap_context = new_context(NAME" snap");
+	snap_context = bcmd_context_new(NAME" snap");
 	if (!snap_context)
 		return errno;
 
-	push_options(snap_context, global_options);
-	push_options(snap_context, snap_option);
+	bcmd_context_pusho(snap_context, global_options);
+	bcmd_context_pusho(snap_context, snap_option);
 
 	printf("Snap action\n");
-	status = parse_options(snap_context, &argc, argv);
+	status = bcmd_context_parseo(snap_context, &argc, argv);
 	switch(status) {
 		case OPT_SUCCESS:
 		default:

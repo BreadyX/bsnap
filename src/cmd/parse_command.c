@@ -5,19 +5,19 @@
 #include "cmd.h"
 
 static cmd_result find_cmd(int argc, char **argv, char **cmd_str, int *i);
-static cmd_result switch_commands(char *command_str, b_command *cmds,
-						          b_command **found);
+static cmd_result switch_commands(char *command_str, bcommand *cmds,
+						          bcommand **found);
 static void print_error(char *name, char *command_str, cmd_result status);
 
-cmd_result extract_command(b_cmd_context *context, int *argc, char **argv,
-						   b_command *found)
+cmd_result bcmd_context_getc(bcmd_context *context, int *argc, char **argv,
+							 bcommand *found)
 {
 	if (!context)
 		return COMMAND_INVALID;
 
 	char *command_str = NULL;
 	int i = 0;
-	b_command *commands = context->commands,
+	bcommand *commands = context->commands,
 			  *command;
 	cmd_result status = COMMAND_SUCCESS;
 
@@ -31,7 +31,7 @@ cmd_result extract_command(b_cmd_context *context, int *argc, char **argv,
 
 	move_to_last(i, *argc, argv);
 	argv[--(*argc)] = NULL;
-	memcpy(found, command, sizeof(b_command));
+	memcpy(found, command, sizeof(bcommand));
 	return COMMAND_SUCCESS;
 
 err:
@@ -52,9 +52,10 @@ cmd_result find_cmd(int argc, char **argv, char **cmd_str, int *i)
 }
 
 
-cmd_result switch_commands(char *command_str, b_command *cmds, b_command **found)
+cmd_result switch_commands(char *command_str, bcommand *cmds, bcommand **found)
 {
-	for (int i = 0; !command_is_null(cmds[i]); i++) {
+	int len = bcommand_len(cmds);
+	for (int i = 0; i < len; i++) {
 		if (strcmp(command_str, cmds[i].name) == 0) {
 			*found = &cmds[i];
 			return COMMAND_SUCCESS;

@@ -12,17 +12,17 @@ static int INDENT_SIZE = 2;
 static int FIRST_COLUMN_LEN = 20;
 static int WRAP_AT = 80;
 
-static void print_option(b_option *option);
+static void print_option(boption *option);
 static void print_entry(char *first, char *second);
 static void new_line_second_col(void);
 
-static void print_help_usage(b_cmd_context *context);
-static _Bool print_help_description(b_cmd_context *context);
-static _Bool print_command_description(b_cmd_context *context);
-static _Bool print_option_description(b_cmd_context *context);
-static _Bool print_help_epilog(b_cmd_context *context);
+static void print_help_usage(bcmd_context *context);
+static _Bool print_help_description(bcmd_context *context);
+static _Bool print_command_description(bcmd_context *context);
+static _Bool print_option_description(bcmd_context *context);
+static _Bool print_help_epilog(bcmd_context *context);
 
-void print_help(b_cmd_context *context)
+void bcmd_context_print_help(bcmd_context *context)
 {
 	if (!context)
 		return;
@@ -44,7 +44,7 @@ void print_help(b_cmd_context *context)
 		putchar('\n');
 }
 
-void print_help_usage(b_cmd_context *context)
+void print_help_usage(bcmd_context *context)
 {
 	if (context->usage)
 		printf("%s", context->usage);
@@ -52,7 +52,7 @@ void print_help_usage(b_cmd_context *context)
 		printf("%s: [OPTION...] {COMMAND}", context->name);
 }
 
-_Bool print_help_description(b_cmd_context *context)
+_Bool print_help_description(bcmd_context *context)
 {
 	if (context->description) {
 		print_wrapped(context->description, WRAP_AT, NULL);
@@ -61,9 +61,9 @@ _Bool print_help_description(b_cmd_context *context)
 	return false;
 }
 
-_Bool print_command_description(b_cmd_context *context)
+_Bool print_command_description(bcmd_context *context)
 {
-	int len = command_len(context->commands);
+	int len = bcommand_len(context->commands);
 	
 	if (len == 0)
 		return false;
@@ -75,10 +75,10 @@ _Bool print_command_description(b_cmd_context *context)
 
 }
 
-_Bool print_option_description(b_cmd_context *context)
+_Bool print_option_description(bcmd_context *context)
 {
-	int len = option_len(context->options);
-	b_option stock_help = { HELP_LONG, HELP_SHORT, "Show this help message",
+	int len = boption_len(context->options);
+	boption stock_help = { HELP_LONG, HELP_SHORT, "Show this help message",
 		ARG_NONE, NULL, NULL };
 
 	if (len == 0 && !context->handle_help)
@@ -94,7 +94,7 @@ _Bool print_option_description(b_cmd_context *context)
 	return true;
 }
 
-void print_option(b_option *option) {
+void print_option(boption *option) {
 	char opt[STRLEN];
 	
 	memset(opt, '\0', sizeof(opt));
@@ -146,7 +146,7 @@ void new_line_second_col(void)
 		putchar(' ');
 }
 
-_Bool print_help_epilog(b_cmd_context *context)
+_Bool print_help_epilog(bcmd_context *context)
 {
 	if (context->epilog) {
 		print_wrapped(context->epilog, WRAP_AT, NULL);

@@ -20,31 +20,31 @@ typedef struct {
 	char invalid_shortopt;
 } opt_arg;
 
-static opt_result set_bools(b_option *options);
-static opt_result set_to(b_option *opt, void *val);
+static opt_result set_bools(boption *options);
+static opt_result set_to(boption *opt, void *val);
 
-static opt_result handle_opt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help);
+static opt_result handle_opt(bcmd_context *context, opt_arg *to_eval, _Bool *handle_help);
 
-static opt_result handle_longopt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help);
+static opt_result handle_longopt(bcmd_context *context, opt_arg *to_eval, _Bool *handle_help);
 static char *separate_optarg_with_equal(char *opt_full, char **opt, char **arg);
-static b_option *find_longopt(char *to_find, b_option *where);
+static boption *find_longopt(char *to_find, boption *where);
 
-static opt_result handle_shortopt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help);
-static b_option *find_shortopt(char to_find, b_option *where);
-static opt_result handle_shortopt_with_arg(opt_arg *to_eval, b_option *found);
+static opt_result handle_shortopt(bcmd_context *context, opt_arg *to_eval, _Bool *handle_help);
+static boption *find_shortopt(char to_find, boption *where);
+static opt_result handle_shortopt_with_arg(opt_arg *to_eval, boption *found);
 
-static void handle_help(b_cmd_context *context);
+static void handle_help(bcmd_context *context);
 static void clean_argv(int *argc, char **argv, int n_args);
 
 static void print_error(char *name, opt_arg *argv, opt_result status);
 static void perror_sep_optarg(char *err_str, char *name, char *orig_opt);
 
-opt_result parse_options(b_cmd_context *context, int *argc, char **argv)
+opt_result bcmd_context_parseo(bcmd_context *context, int *argc, char **argv)
 {
 	if (!context)
 		return OPT_INVALID;
 
-	b_option *options = context->options;
+	boption *options = context->options;
 	int index = 0, n_args = *argc;
 	opt_result status = OPT_SUCCESS;
 	opt_arg to_eval = {0};
@@ -98,10 +98,10 @@ error:
 	return status;
 }
 
-opt_result set_bools(b_option *options)
+opt_result set_bools(boption *options)
 {
 	opt_result status = OPT_SUCCESS;
-	for (int i = 0; !option_is_null(options[i]); i++) {
+	for (int i = 0; !boption_null(options[i]); i++) {
 		if (options[i].type == ARG_NONE) {
 			status = set_to(&options[i], &BOOL_FALSE);
 			if (status != OPT_SUCCESS)
@@ -111,7 +111,7 @@ opt_result set_bools(b_option *options)
 	return status;
 }
 
-opt_result set_to(b_option *opt, void *val)
+opt_result set_to(boption *opt, void *val)
 {
 	void *to_set = opt->arg;
 	arg_type type = opt->type;
@@ -154,18 +154,18 @@ opt_result set_to(b_option *opt, void *val)
 	}
 }
 
-opt_result handle_opt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help)
+opt_result handle_opt(bcmd_context *context, opt_arg *to_eval, _Bool *handle_help)
 {
 	if (to_eval->type == LONG)
 		return handle_longopt(context, to_eval, handle_help);
 	return handle_shortopt(context, to_eval, handle_help);
 }
 
-opt_result handle_longopt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help)
+opt_result handle_longopt(bcmd_context *context, opt_arg *to_eval, _Bool *handle_help)
 {
 	opt_result out = OPT_SUCCESS;
 	char *opt, *arg, *sep, back;
-	b_option *found;
+	boption *found;
 
 	sep = separate_optarg_with_equal(to_eval->opt, &opt, &arg);
 	back = *sep;
@@ -227,20 +227,20 @@ char *separate_optarg_with_equal(char *opt_full, char **opt, char **arg)
 	return c;
 }
 
-b_option *find_longopt(char *to_find, b_option *where)
+boption *find_longopt(char *to_find, boption *where)
 {
-	int len = option_len(where);
+	int len = boption_len(where);
 	for (int i = 0; i < len; i++)
 		if (strcmp(to_find, where[i].long_name) == 0)
 			return &where[i];
 	return NULL;
 }
 
-opt_result handle_shortopt(b_cmd_context *context, opt_arg *to_eval, _Bool *handle_help)
+opt_result handle_shortopt(bcmd_context *context, opt_arg *to_eval, _Bool *handle_help)
 {
 	opt_result status = OPT_SUCCESS;
 	char opt;
-	b_option *found;
+	boption *found;
 
 	for (int i = 0; (opt = to_eval->opt[i]) != '\0'; i++) {
 		found = find_shortopt(opt, context->options);
@@ -269,16 +269,16 @@ opt_result handle_shortopt(b_cmd_context *context, opt_arg *to_eval, _Bool *hand
 	return status;
 }
 
-b_option *find_shortopt(char to_find, b_option *where)
+boption *find_shortopt(char to_find, boption *where)
 {
-
-	for (int i = 0; !option_is_null(where[i]); i++)
+	int len = boption_len(where);
+	for (int i = 0; i < len; i++)
 		if (to_find == where[i].short_name)
 			return &where[i];
 	return NULL;
 }
 
-opt_result handle_shortopt_with_arg(opt_arg *to_eval, b_option *found)
+opt_result handle_shortopt_with_arg(opt_arg *to_eval, boption *found)
 {
 	char *arg;
 	if (to_eval->opt[1] == '\0') {
@@ -294,9 +294,9 @@ opt_result handle_shortopt_with_arg(opt_arg *to_eval, b_option *found)
 	return set_to(found, arg);
 }
 
-void handle_help(b_cmd_context *context)
+void handle_help(bcmd_context *context)
 {
-	print_help(context);
+	bcmd_context_print_help(context);
 	exit(EXIT_SUCCESS);
 }
 
