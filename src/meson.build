@@ -7,13 +7,9 @@ src += [base_dir / 'cmd' / 'context.c',
 		base_dir / 'cmd' / 'util.c',
 		base_dir / 'cmd' / 'help.c',
 		base_dir / 'print_utils.c',
-		base_dir / 'snap' / 'snap.c', # debug
+		base_dir / 'snap' / 'snap.c',
+		base_dir / 'structures' / 'list.c',
 		base_dir / 'config.c',
-		base_dir / 'main.c',
-		# TODO
+		base_dir / 'main.c'
 	  ]
-
-# // TODO: this is only for debug purposes. Has to be removed
-includes += include_directories('.')
-
 
