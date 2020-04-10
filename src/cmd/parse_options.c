@@ -79,6 +79,11 @@ opt_result bcmd_context_parseo(bcmd_context *context, int *argc, char **argv)
 				goto error;
 			if (to_eval.skip)
 				index++;
+			if (help) {
+				bcmd_context_print_help(context);
+				status = OPT_HELP;
+				break;
+			}
 		} else { // argv
 			move_to_last(index, *argc, argv);
 			index--;
@@ -86,9 +91,6 @@ opt_result bcmd_context_parseo(bcmd_context *context, int *argc, char **argv)
 		}
 	}
 	clean_argv(argc, argv, n_args);
-
-	if (help)
-		handle_help(context);
 
 	return status;
 
@@ -352,6 +354,7 @@ void print_error(char *name, opt_arg *argv, opt_result status)
 					          name, argv->opt);
 			break;
 
+		case OPT_HELP:
 		case OPT_SUCCESS:
 			fprintf(stderr, "%s: Everything is ok but this is somehow an error, "
 				    "I am confused\n", name);

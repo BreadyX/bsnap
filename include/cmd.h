@@ -14,6 +14,7 @@ typedef enum {
 } arg_type;
 typedef enum {
 	OPT_SUCCESS,
+	OPT_HELP,
 	OPT_INVALID,
 	OPT_MISPLACED,
 	OPT_OTHER_ERROR,
@@ -70,7 +71,7 @@ boption *boption_cat(const boption *first, const boption *second);
 _Bool bcommand_null(bcommand command);
 _Bool boption_null(boption option);
 
-bcmd_context *bcmd_context_new(char *name);
+bcmd_context *bcmd_context_create(char *name);
 
 void bcmd_context_set_name(bcmd_context *context, char *name);
 char *bcmd_context_get_name(bcmd_context *context);
@@ -96,7 +97,7 @@ void bcmd_context_pusho(bcmd_context *context, const boption *options);
 void bcmd_context_clearc(bcmd_context *context);
 void bcmd_context_cleano(bcmd_context *context);
 
-void bcmd_context_delete(bcmd_context **context);
+void bcmd_context_destroy(bcmd_context **context);
 
 opt_result bcmd_context_parseo(bcmd_context *context, int *argc, char **argv);
 cmd_result bcmd_context_getc(bcmd_context *context, int *argc, char **argv,

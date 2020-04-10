@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "structures/list.c" // i'm not crazy
+#include "structures/blist.h"
+#include "structures/blist.c"       // i am not crazy
+#include "structures/global_defs.c" // i am not crazy
 
 // blist_create  OK
 // blsit_len     OK

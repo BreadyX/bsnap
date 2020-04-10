@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "structures.h"
+#include "structures/blist.h"
 
 struct blist_item_s {
 	void *item;
@@ -13,8 +13,6 @@ struct blist_iter_s {
 
 	int index;
 	struct blist_item_s *current;
-	// struct blist_item_s *next;
-	// struct blist_item_s *prev;
 };
 
 struct blist_s {
@@ -41,14 +39,14 @@ static void *blist_remove_item(blist *list, struct blist_item_s *item);
 
 static void blist_iter_init(blist *list, blist_iter *iter);
 
-static inline _Bool stock_equals(void *first, void *second) {
-	return first == second;
-}
 static inline struct blist_item_s *blist_get_item(blist *list, int index) {
 	return (index >= list->size / 2) ? blist_walk_to_backwards(list, index) :
 		blist_walk_to_forwards(list, index);
 }
 
+/*
+ * blist
+ */
 struct blist_item_s *blist_walk_to_forwards(blist *list, int to)
 {
 	if (!list || to < 0 || to >= list->size)
@@ -87,14 +85,14 @@ int blist_len(blist *list)
 	return list ? list->size : 0;
 }
 
-int blist_index(blist *list, void *to_get, _Bool (*eq)(void*, void*))
+int blist_index(blist *list, void *to_get, equals eq)
 {
 	if (!list)
 		return -1;
 
 	struct blist_item_s *item = list->first;
 
-	eq = eq ? eq : stock_equals;
+	eq = eq ? eq : default_equals;
 	for (int i = 0; item; i++) {
 		if (eq(to_get, item->item))
 			return i;
@@ -118,10 +116,10 @@ void blist_append(blist *list, void *item)
 {
 	if (!list)
 		return;
-	
+
 	struct blist_item_s *new;
 	struct blist_item_s *last = list->last;
-	
+
 	new = calloc(1, sizeof(struct blist_item_s));
 	if (!new)
 		return;
@@ -151,7 +149,10 @@ void blist_insert(blist *list, void *item, int index)
 	insert->item = item;
 
 	prev_insert = blist_get_item(list, index);
-	blist_insert_item(list, prev_insert, insert);
+	if (prev_insert)
+		blist_insert_item(list, prev_insert, insert);
+	else
+		free(insert);
 }
 
 void blist_insert_item(blist *list, struct blist_item_s *prev_insert,
@@ -206,8 +207,16 @@ void *blist_remove_item(blist *list, struct blist_item_s *item)
 
 void blist_clear(blist *list)
 {
-	for (int i = 0; i < list->size; i++)
-		blist_pop(list);
+	struct blist_item_s *i = list->first;
+	struct blist_item_s *i_next;
+
+	while(i) {
+		i_next = i->next;
+		free(i);
+		i = i_next;
+	}
+	list->size = 0;
+	list->first = list->last = NULL;
 }
 
 void blist_destroy(blist **list)
@@ -220,6 +229,9 @@ void blist_destroy(blist **list)
 	list = NULL;
 }
 
+/*
+ * Iter
+ */
 blist_iter *blist_iter_create(blist *list)
 {
 	if (!list)
@@ -328,9 +340,6 @@ void blist_iter_insert(blist_iter *iter, void *item, _Bool after)
 		blist_insert_item(iter->list, iter->current, insert);
 		iter->index++;
 	}
-
-	// iter->next = iter->current->next;
-	// iter->prev = iter->current->prev;
 }
 
 void *blist_iter_remove(blist_iter *iter, _Bool go_next)

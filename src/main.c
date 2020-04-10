@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	int status;
 
 	errno = 0;
-	main_context = bcmd_context_new(NAME);
+	main_context = bcmd_context_create(NAME);
 
 	if (!main_context)
 		return errno;
@@ -65,27 +65,29 @@ int main(int argc, char **argv)
 				goto success;
 		case COMMAND_MISSING:
 			status = bcmd_context_parseo(main_context, &argc, argv);
-			if (status != OPT_SUCCESS)
+			if (status == OPT_SUCCESS) {
+				do_base(main_context);
+				goto success;
+			} else if (status == OPT_HELP) {
+				status = EXIT_SUCCESS;
+				goto success;
+			} else
 				goto error;
-			do_base(main_context);
-			goto success;
 		case COMMAND_INVALID:
 			goto error;
 	}
 
 error:
-	fprintf(stderr, "See %s --help for help\n", bcmd_context_get_name(main_context));
+	fprintf(stderr, "See %s --help for help\n", NAME);
 	status = EXIT_FAILURE;
 	// fall through
 success:
-	bcmd_context_delete(&main_context);
+	bcmd_context_destroy(&main_context);
 	return status;
 }
 
 void do_base(bcmd_context *context)
 {
-	if (opt_version) {
-		printf("%s - version %s", NAME, VERSION);
-		exit(EXIT_SUCCESS);
-	}
+	if (opt_version)
+		printf("%s %s\n", NAME, VERSION); // add author and copyright
 }

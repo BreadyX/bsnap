@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <structures/list.c> // i am not crazy
+#include "structures/blist.h"
+#include "structures/blist.c" // i am not crazy
+#include "structures/global_defs.c" // i am not crazy
 
 // blist_iter_create     OK
 // blist_iter_index      OK
@@ -12,8 +14,8 @@
 // blist_iter_has_next   OK
 // blist_iter_is_done    OK
 // blist_iter_get        OK
-// blist_iter_insert
-// blist_iter_remove
+// blist_iter_insert     OK
+// blist_iter_remove     OK
 // blist_iter_jump_first OK
 // blist_iter_jump_last  OK
 // blsit_iter_destroy    OK
@@ -109,5 +111,6 @@ int main(int argc, char **argv)
 	test_mod(iter);       // 0 1 2 3 4 4 4 5 6 7 8 9
 
 	blist_iter_destroy(&iter);
+	blist_destroy(&list);
 	return 0;
 }

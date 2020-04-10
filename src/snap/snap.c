@@ -17,7 +17,7 @@ int snap_callback(int argc, char **argv)
 	bcmd_context *snap_context;
 	int status;
 
-	snap_context = bcmd_context_new(NAME" snap");
+	snap_context = bcmd_context_create(NAME" snap");
 	if (!snap_context)
 		goto error;
 
@@ -28,16 +28,21 @@ int snap_callback(int argc, char **argv)
 	status = bcmd_context_parseo(snap_context, &argc, argv);
 	if (status != OPT_SUCCESS)
 		goto error;
+	if (status == OPT_HELP)
+		goto success;
+
 	// read_config();
 	// for name in arg
 	//   matches += find_matching();
 	// for match in matches
 	//   create_snap()
+
 	goto success;
 
 error:
 	status = EXIT_FAILURE;
 
 success:
+	bcmd_context_destroy(&snap_context);
 	return status;
 }

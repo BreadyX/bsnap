@@ -2,7 +2,9 @@ test_includes = [include_directories('..' / 'src')]
 
 tests = {
   'test blist':      [['test-list.c'], []],
-  'test blist_iter': [['test-list-iter.c'], []]
+  'test blist_iter': [['test-list-iter.c'], []],
+  'test bmap':       [['test-map.c'], []],
+  'test bmap_iter':  [['test-map-iter.c'], []],
 }
 
 foreach test_case, test_data : tests

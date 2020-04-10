@@ -8,7 +8,7 @@
 
 static void set_str(char **to_set, char *new);
 
-bcmd_context *bcmd_context_new(char *name)
+bcmd_context *bcmd_context_create(char *name)
 {
 	bcmd_context *to_return;
 
@@ -184,7 +184,7 @@ _Bool bcmd_context_get_handle_help(bcmd_context *context)
 	return context ? context->handle_help : false;
 }
 
-void bcmd_context_delete(bcmd_context **context)
+void bcmd_context_destroy(bcmd_context **context)
 {
 	if (!context || !(*context))
 		return;
