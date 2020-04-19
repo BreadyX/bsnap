@@ -1,5 +1,6 @@
 project('bsnap', 'c', version: '0.0.1')
 
+
 src = []
 includes = [include_directories('include')]
 
@@ -13,4 +14,8 @@ bsnap = executable(meson.project_name(),
 				   install: true,
 				   install_dir: get_option('bindir'))
 
+# Tests
 subdir('tests')
+
+# Documentation
+subdir('docs')

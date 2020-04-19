@@ -30,7 +30,7 @@ void bcmd_context_print_help(bcmd_context *context)
 	print_help_usage(context);
 	putchar('\n');
 
-	if (print_help_description(context)) 
+	if (print_help_description(context))
 		putchar('\n');
 	putchar('\n');
 
@@ -47,9 +47,9 @@ void bcmd_context_print_help(bcmd_context *context)
 void print_help_usage(bcmd_context *context)
 {
 	if (context->usage)
-		printf("%s", context->usage);
+		printf("Usage: %s", context->usage);
 	else
-		printf("%s: [OPTION...] {COMMAND}", context->name);
+		printf("Usage: %s [OPTION...] {COMMAND}", context->name);
 }
 
 _Bool print_help_description(bcmd_context *context)
@@ -64,10 +64,10 @@ _Bool print_help_description(bcmd_context *context)
 _Bool print_command_description(bcmd_context *context)
 {
 	int len = bcommand_len(context->commands);
-	
+
 	if (len == 0)
 		return false;
-	
+
 	printf("Commands:\n");
 	for (int i = 0; i < len; i++)
 		print_entry(context->commands[i].name, context->commands[i].tip);
@@ -87,16 +87,16 @@ _Bool print_option_description(bcmd_context *context)
 	printf("Options:\n");
 	for (int i = 0; i < len; i++)
 		print_option(&(context->options[i]));
-	
+
 	if (context->handle_help)
 		print_option(&stock_help);
-	
+
 	return true;
 }
 
 void print_option(boption *option) {
 	char opt[STRLEN];
-	
+
 	memset(opt, '\0', sizeof(opt));
 	if (option->short_name != '\0')
 		snprintf(opt, STRLEN, "-%c, --", option->short_name);

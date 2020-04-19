@@ -3,7 +3,7 @@
 
 #include "cmd.h"
 
-#define PRG_DESCRIPTION "bsnap.\n"\
+#define PRG_DESCRIPTION "Placeholder description\n"\
 						"To print info about a specific command run bsnap command --help"
 #define PRG_EPILOG      "bsnap epilog."
 
