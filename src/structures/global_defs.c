@@ -17,7 +17,7 @@ int default_compare(void *first, void *second)
 		return 1;
 }
 
-void default_obj(void *obj)
+void default_delete_obj(void *obj)
 {
 	free(obj);
 }

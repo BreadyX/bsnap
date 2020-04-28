@@ -71,7 +71,7 @@ void test_insertion(blist *list) {
 	if (*((int *)item->item) != 4)
 		exit(1);
 	print_full_without_iter("Generic insert: ", list);
-	
+
 	// INVALID INSERT
 	blist_insert(list, NULL, 69);
 }
@@ -106,7 +106,7 @@ void test_deletion(blist *list)
 	if (*((int *)item->item) != 4)
 		exit(1);
 	print_full_without_iter("Generic remove: ", list);
-	
+
 	// INVALID REMOVE
 	removed = blist_remove(list, 69);
 }
@@ -145,7 +145,7 @@ void test_get(blist *list)
 	got = blist_get(list, 69);
 	if (got)
 		exit(1);
-	
+
 	// INVALID INDEX
 	if (blist_index(list, NULL, NULL) != -1)
 		exit(1);
@@ -153,16 +153,16 @@ void test_get(blist *list)
 
 int main(int argc, char **argv)
 {
-	blist *list = blist_create();
+	blist *list = blist_create(0, NULL);
 	if (!list)
 		return 1;
-	
+
 	test_insertion(list); // -1 0 1 2 3 4 4 5 6 7 8 9
 	test_deletion(list);  // 0 1 2 3 4 5 6 7 8
 	test_get(list);       // 0 1 2 3 4 5 6 7 8
-	
+
 	blist_clear(list);
-	blist_destroy(&list);
+	blist_destroy(list);
 	return 0;
 }
 

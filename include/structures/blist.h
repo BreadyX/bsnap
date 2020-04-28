@@ -6,7 +6,10 @@
 typedef struct blist_s blist;
 typedef struct blist_iter_s blist_iter;
 
-blist *blist_create(void);
+#define BLIST_DELETE_OBJS    0x01
+#define BLIST_DEFAULT_FLAGS  0x01
+
+blist *blist_create(unsigned char flags, delete_obj deleter);
 int    blist_len(blist *list);
 void   blist_append(blist *list, void *item);
 void   blist_insert(blist *list, void *item, int index);
@@ -14,7 +17,7 @@ int    blist_index(blist *list, void *item, equals eq);
 void  *blist_get(blist *list, int index);
 void  *blist_remove(blist *list, int index);
 void   blist_clear(blist *list);
-void   blist_destroy(blist **list);
+void   blist_destroy(blist *list);
 
 inline _Bool blist_empty(blist *list) { return blist_len(list) == 0; }
 inline void  blist_push(blist *list, void *item) { blist_insert(list, item, 0); }
@@ -41,7 +44,7 @@ void        blist_iter_insert(blist_iter *iter, void *item, _Bool after);
 void       *blist_iter_remove(blist_iter *iter, _Bool go_next);
 void        blist_iter_jump_first(blist_iter *iter);
 void        blist_iter_jump_last(blist_iter *iter);
-void        blist_iter_destroy(blist_iter **iter);
+void        blist_iter_destroy(blist_iter *iter);
 
 #define blist_iter_insert_here(list, item) do { blist_iter_insert(list, item, 0) } while(0)
 

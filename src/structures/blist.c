@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <errno.h>
 
 #include "structures/blist.h"
+#include "utils.h"
 
 struct blist_item_s {
 	void *item;
@@ -16,10 +18,13 @@ struct blist_iter_s {
 };
 
 struct blist_s {
+	unsigned char flags;
 	int size;
 
 	struct blist_item_s *first;
 	struct blist_item_s *last;
+
+	delete_obj deleter;
 };
 
 extern _Bool blist_empty(blist *list);
@@ -75,9 +80,17 @@ struct blist_item_s *blist_walk_to_backwards(blist *list, int to)
 	return NULL;
 }
 
-blist *blist_create(void)
+blist *blist_create(unsigned char flags, delete_obj deleter)
 {
-	return calloc(1, sizeof(blist));
+	blist *to_ret = calloc(1, sizeof(blist));
+	if (!to_ret) {
+		to_ret->flags = flags;
+		if (flags & BLIST_DELETE_OBJS)
+			to_ret->deleter = deleter ? deleter : default_delete_obj;
+		else
+			to_ret->deleter = NULL;
+	}
+	return to_ret;
 }
 
 int blist_len(blist *list)
@@ -87,8 +100,7 @@ int blist_len(blist *list)
 
 int blist_index(blist *list, void *to_get, equals eq)
 {
-	if (!list)
-		return -1;
+	check_param_ptr(list, EINVAL, -1);
 
 	struct blist_item_s *item = list->first;
 
@@ -98,24 +110,27 @@ int blist_index(blist *list, void *to_get, equals eq)
 			return i;
 		item = item->next;
 	}
+	errno = EINVAL;
 	return -1;
 }
 
 void *blist_get(blist *list, int index)
 {
-	if (!list)
-		return NULL;
+	check_param_ptr(list, EINVAL, NULL);
 
 	struct blist_item_s *item;
 
 	item = blist_get_item(list, index);
-	return item ? item->item : NULL;
+	if (!item) {
+		errno = EINVAL;
+		return NULL;
+	}
+	return item->item;
 }
 
 void blist_append(blist *list, void *item)
 {
-	if (!list)
-		return;
+	check_param_ptr(list, EINVAL, );
 
 	struct blist_item_s *new;
 	struct blist_item_s *last = list->last;
@@ -137,8 +152,7 @@ void blist_append(blist *list, void *item)
 
 void blist_insert(blist *list, void *item, int index)
 {
-	if (!list)
-		return;
+	check_param_ptr(list, EINVAL, );
 
 	struct blist_item_s *prev_insert;
 	struct blist_item_s *insert;
@@ -151,8 +165,10 @@ void blist_insert(blist *list, void *item, int index)
 	prev_insert = blist_get_item(list, index);
 	if (prev_insert)
 		blist_insert_item(list, prev_insert, insert);
-	else
+	else {
+		errno = EINVAL;
 		free(insert);
+	}
 }
 
 void blist_insert_item(blist *list, struct blist_item_s *prev_insert,
@@ -175,13 +191,23 @@ void blist_insert_item(blist *list, struct blist_item_s *prev_insert,
 
 void *blist_remove(blist *list, int index)
 {
-	if (!list)
-		return NULL;
+	check_param_ptr(list, EINVAL, NULL);
 
 	struct blist_item_s *item;
+	void *val;
 
 	item = blist_get_item(list, index);
-	return blist_remove_item(list, item);
+	if (item) {
+		val = blist_remove_item(list, item);
+		if (list->flags & BLIST_DELETE_OBJS && list->deleter) {
+			list->deleter(val);
+			return NULL;
+		} else
+			return val;
+	} else {
+		errno = EINVAL;
+		return NULL;
+	}
 }
 
 void *blist_remove_item(blist *list, struct blist_item_s *item)
@@ -207,11 +233,15 @@ void *blist_remove_item(blist *list, struct blist_item_s *item)
 
 void blist_clear(blist *list)
 {
+	check_param_ptr(list, EINVAL, );
+
 	struct blist_item_s *i = list->first;
 	struct blist_item_s *i_next;
 
 	while(i) {
 		i_next = i->next;
+		if (list->flags & BLIST_DELETE_OBJS && list->deleter)
+			list->deleter(i->item);
 		free(i);
 		i = i_next;
 	}
@@ -219,14 +249,12 @@ void blist_clear(blist *list)
 	list->first = list->last = NULL;
 }
 
-void blist_destroy(blist **list)
+void blist_destroy(blist *list)
 {
-	if (!list || !(*list))
-		return;
+	check_param_ptr(list, EINVAL, );
 
-	blist_clear(*list);
-	free(*list);
-	list = NULL;
+	blist_clear(list);
+	free(list);
 }
 
 /*
@@ -234,14 +262,12 @@ void blist_destroy(blist **list)
  */
 blist_iter *blist_iter_create(blist *list)
 {
-	if (!list)
-		return NULL;
+	check_param_ptr(list, EINVAL, NULL);
 
 	blist_iter *iter = malloc(sizeof(blist_iter));
 
-	if (iter) {
+	if (iter)
 		blist_iter_init(list, iter);
-	}
 	return iter;
 }
 
@@ -249,21 +275,23 @@ void blist_iter_init(blist *list, blist_iter *iter) {
 	iter->index = 0;
 	iter->list = list;
 	iter->current = list->first;
-	// iter->prev = NULL;
-	// iter->next = iter->current ? iter->current->next : NULL;
 }
 
 int blist_iter_index(blist_iter *iter)
 {
-	return iter ? iter->index : -1;
+	if (iter)
+		return iter->index;
+	else {
+		errno = EINVAL;
+		return -1;
+	}
 }
 
 void *blist_iter_next(blist_iter *iter)
 {
 	void *to_ret = NULL;
 
-	if (!iter)
-		return NULL;
+	check_param_ptr(iter, EINVAL, NULL);
 
 	if (iter->current) {
 		to_ret = iter->current->item;
@@ -281,8 +309,7 @@ void *blist_iter_prev(blist_iter *iter)
 {
 	void *to_ret = NULL;
 
-	if (!iter)
-		return NULL;
+	check_param_ptr(iter, EINVAL, NULL);
 
 	if (iter->current) {
 		to_ret = iter->current->item;
@@ -317,6 +344,7 @@ _Bool blist_iter_is_done(blist_iter *iter)
 
 void *blist_iter_get(blist_iter *iter)
 {
+	check_param_ptr(iter, EINVAL, NULL);
 	if (iter && iter->current)
 		return iter->current->item;
 	return NULL;
@@ -324,14 +352,15 @@ void *blist_iter_get(blist_iter *iter)
 
 void blist_iter_insert(blist_iter *iter, void *item, _Bool after)
 {
-	if (!iter)
-		return;
+	check_param_ptr(iter, EINVAL, );
 
 	struct blist_item_s *insert;
 
 	insert = calloc(1, sizeof(struct blist_item_s));
-	if (!insert)
+	if (!insert) {
+		errno = ENOMEM;
 		return;
+	}
 	insert->item = item;
 
 	if (after)
@@ -344,7 +373,9 @@ void blist_iter_insert(blist_iter *iter, void *item, _Bool after)
 
 void *blist_iter_remove(blist_iter *iter, _Bool go_next)
 {
-	if (!iter || !iter->current)
+	check_param_ptr(iter, EINVAL, NULL);
+
+	if (iter->current)
 		return NULL;
 
 	struct blist_item_s *to_go = NULL;
@@ -358,30 +389,30 @@ void *blist_iter_remove(blist_iter *iter, _Bool go_next)
 	to_ret = blist_remove_item(iter->list, iter->current);
 	iter->current = to_go;
 
-	return to_ret;
+	if (iter->list->flags & BLIST_DELETE_OBJS && iter->list->deleter) {
+		iter->list->deleter(to_ret);
+		return NULL;
+	} else
+		return to_ret;
 
 }
 
 void blist_iter_jump_first(blist_iter *iter)
 {
-	if (!iter)
-		return;
+	check_param_ptr(iter, EINVAL, );
 	blist_iter_init(iter->list, iter);
 }
 
 void blist_iter_jump_last(blist_iter *iter)
 {
-	if (!iter)
-		return;
+	check_param_ptr(iter, EINVAL, );
 	iter->index = iter->list->size == 0 ? 0 : iter->list->size - 1;
 	iter->current = iter->list->last;
 }
 
-void blist_iter_destroy(blist_iter **iter_p)
+void blist_iter_destroy(blist_iter *iter)
 {
-	if (iter_p && *iter_p) {
-		free(*iter_p);
-		*iter_p = NULL;
-	}
+	check_param_ptr(iter, EINVAL, );
+	free(iter);
 }
 

@@ -56,13 +56,14 @@ void test(bmap_iter *iter)
 
 int main(void)
 {
-	bmap *map = bmap_create(0, 0);
+	bmap *map = bmap_create(0, 0, BMAP_DELETE_OBJS, BMAP_DEFAULT_HASH,
+			default_delete_obj);
 	populate_map(map);
 
 	bmap_iter *iter = bmap_iter_create(map);
 
 	test(iter);
 
-	bmap_iter_destroy(&iter); // Note: valgrind will complain
-	bmap_destroy(&map);       // Note: valgrind will complain
+	bmap_iter_destroy(iter);
+	bmap_destroy(map);
 }

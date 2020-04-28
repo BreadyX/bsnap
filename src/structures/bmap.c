@@ -5,6 +5,8 @@
 #include "structures/bmap.h"
 
 struct bmap_s {
+	unsigned char flags;
+
 	double load_factor;
 	int threshold;
 
@@ -15,6 +17,9 @@ struct bmap_s {
 
 	char **keys;
 	void **values;
+
+	delete_obj deleter;
+	hash_func hash;
 };
 
 struct bmap_iter_s {
@@ -23,10 +28,12 @@ struct bmap_iter_s {
 	int offset;
 };
 
+extern void bmap_destroyer(void *ptr);
+extern void bmap_iter_destroyer(void *ptr);
+
 static inline int P(int i) { return i++; } // NON NORMALIZED
 static inline int normalize(int i, int size) { return i % size; }
 
-static unsigned long hash_key(const char *s); // NON NORMALIZED
 static int resize_map(bmap *map);
 
 static int bmap_iter_find_next(bmap *map, int start);
@@ -38,21 +45,29 @@ static char *TOMBSTONE = "f";
  */
 int bmap_size(bmap *map) { return map->key_count; }
 
-bmap *bmap_create(int start_size, double load_factor) {
-	start_size = start_size < DEFAULT_START_SIZE ? DEFAULT_START_SIZE : start_size;
+bmap *bmap_create(int start_size, double load_factor, unsigned char flags,
+	              hash_func hash, delete_obj deleter) {
+	start_size = start_size < BMAP_DEFAULT_START_SIZE ? BMAP_DEFAULT_START_SIZE : start_size;
 	if (load_factor <= 0 || load_factor >= 1)
-		load_factor = DEFAULT_LOAD_FACTOR;
+		load_factor = BMAP_DEFAULT_LOAD_FACTOR;
 
 	bmap *to_ret = malloc(sizeof(bmap));
 	if (!to_ret)
 		goto first_error;
 
+	to_ret->flags = flags;
 	to_ret->load_factor = load_factor;
 	to_ret->size = start_size;
 	to_ret->threshold = start_size * load_factor;
 	to_ret->key_count = 0;
 	to_ret->used_count = 0;
 	to_ret->mod_count = 0;
+
+	to_ret->hash = hash ? hash : default_hash_func;
+	if (flags & BMAP_DELETE_OBJS)
+		to_ret->deleter = deleter ? deleter : default_delete_obj;
+	else
+		to_ret->deleter = NULL;
 
 	to_ret->keys = calloc(start_size, sizeof(char *));
 	if (!to_ret->keys)
@@ -93,7 +108,7 @@ void *bmap_insert(bmap *map, const char *key, void *value)
 	if (!new_key)
 		return to_ret;
 
-	off = normalize(hash_key(new_key), map->size);
+	off = normalize(map->hash(new_key), map->size);
 	for (int i = off, j = -1, x = 1; ; i = normalize(off + P(x++), map->size)) {
 		if (map->keys[i] == TOMBSTONE) {
 			if (j == -1) // keep track of the first tombstone found
@@ -171,7 +186,7 @@ int resize_map(bmap *map)
 	return EXIT_SUCCESS;
 }
 
-unsigned long hash_key(const char *s)
+unsigned long default_hash_func(const char *s)
 {
 	// implementation of the PJW hash algorithm
 	const unsigned char *u_s = (unsigned char*) s;
@@ -197,7 +212,7 @@ void *bmap_get(bmap *map, const char *key)
 		return NULL;
 	}
 
-	int off = normalize(hash_key(key), map->size);
+	int off = normalize(map->hash(key), map->size);
 
 	for (int i = off, j = -1, x = 1; ; i = normalize(off + P(x++), map->size)) {
 		if (map->keys[i] == TOMBSTONE) {
@@ -254,7 +269,7 @@ void *bmap_remove(bmap *map, const char *key)
 		return NULL;
 	}
 
-	int off = normalize(hash_key(key), map->size);
+	int off = normalize(map->hash(key), map->size);
 	void *to_ret;
 
 	for (int i = off, x = 1; ; i = normalize(off + P(x++), map->size)) {
@@ -271,7 +286,11 @@ void *bmap_remove(bmap *map, const char *key)
 			map->keys[i] = TOMBSTONE;
 			to_ret = map->values[i];
 			map->values[i] = NULL;
-			return to_ret;
+			if (map->flags & BMAP_DELETE_OBJS && map->deleter) {
+				map->deleter(to_ret);
+				return NULL;
+			} else
+				return to_ret;
 		}
 	}
 }
@@ -285,8 +304,12 @@ void bmap_clear(bmap *map)
 
 	for (int i = 0; i < map->size; i++) {
 		if (map->keys[i] != NULL) {
-			if (map->keys[i] != TOMBSTONE)
+			if (map->keys[i] != TOMBSTONE) {
 				free(map->keys[i]);
+
+				if (map->flags & BMAP_DELETE_OBJS && map->deleter)
+					map->deleter(map->values[i]);
+			}
 			map->keys[i] = NULL;
 		}
 		map->values[i] = NULL;
@@ -296,18 +319,17 @@ void bmap_clear(bmap *map)
 	map->mod_count++;
 }
 
-void bmap_destroy(bmap **map_ptr)
+void bmap_destroy(bmap *map)
 {
-	if (!map_ptr || !(*map_ptr)) {
+	if (!map) {
 		errno = EINVAL;
 		return;
 	}
 
-	bmap_clear(*map_ptr);
-	free((*map_ptr)->keys);
-	free((*map_ptr)->values);
-	free(*map_ptr);
-	*map_ptr = NULL;
+	bmap_clear(map);
+	free(map->keys);
+	free(map->values);
+	free(map);
 }
 
 /*
@@ -396,11 +418,10 @@ void bmap_iter_reset(bmap_iter *iter)
 	iter->offset = bmap_iter_find_next(iter->map, 0);
 }
 
-void bmap_iter_destroy(bmap_iter **iter_ptr)
+void bmap_iter_destroy(bmap_iter *iter_ptr)
 {
-	if (!iter_ptr || !(*iter_ptr))
+	if (!iter_ptr)
 		return;
 
-	free(*iter_ptr);
-	*iter_ptr = NULL;
+	free(iter_ptr);
 }

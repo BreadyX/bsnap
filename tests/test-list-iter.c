@@ -98,7 +98,7 @@ void test_mod(blist_iter *iter)
 int main(int argc, char **argv)
 {
 	int *m;
-	blist *list = blist_create();
+	blist *list = blist_create(0, NULL);
 
 	for (int i = 0; i < 10; i++) {
 		m = malloc(sizeof(int));
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 	test_movement(iter);  // 0 1 2 3 4 5 6 7 8 9 - iter: 0
 	test_mod(iter);       // 0 1 2 3 4 4 4 5 6 7 8 9
 
-	blist_iter_destroy(&iter);
-	blist_destroy(&list);
+	blist_iter_destroy(iter);
+	blist_destroy(list);
 	return 0;
 }
