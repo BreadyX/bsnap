@@ -375,7 +375,7 @@ void *blist_iter_remove(blist_iter *iter, _Bool go_next)
 {
 	check_param_ptr(iter, EINVAL, NULL);
 
-	if (iter->current)
+	if (!iter->current)
 		return NULL;
 
 	struct blist_item_s *to_go = NULL;
